@@ -4,7 +4,8 @@ A rust implementation of Freivald's algorithm on matrix multiplication
 
 ### Get Started
 ```rust
-cargo test
+cargo test -- --nocapture
+cargo bench -- --nocapture
 ```
 
 /// TODO

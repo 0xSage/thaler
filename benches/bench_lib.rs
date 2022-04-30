@@ -1,9 +1,13 @@
+#![feature(test)]
+
 #[macro_use]
 extern crate lazy_static;
 
+extern crate test;
+use test::Bencher;
+
 use freivald;
 use ndarray::{arr2, Array2};
-use rstest::rstest;
 
 lazy_static! {
 	static ref MATRIX_A: Array2<i64> = arr2(&[[1, 2], [3, 4]]);
@@ -13,16 +17,8 @@ lazy_static! {
 	// TODO generate huge matrices for existing test
 }
 
-#[rstest]
-#[case(&MATRIX_A, &MATRIX_A, &MATRIX_A_DOT_A)]
-#[case(&MATRIX_B, &MATRIX_B, &MATRIX_B_DOT_B)]
-fn dumb_verify_test(#[case] a: &Array2<i64>, #[case] b: &Array2<i64>, #[case] c: &Array2<i64>) {
-	assert!(freivald::dumb_verify(a, b, c));
-}
-
-#[rstest]
-#[case(&MATRIX_A, &MATRIX_A, &MATRIX_A_DOT_A)]
-fn freivald_verify_test(#[case] a: &Array2<i64>, #[case] b: &Array2<i64>, #[case] c: &Array2<i64>) {
-	// TODO
-	assert!(true);
+#[bench]
+fn dumb_verify_test(b: &mut Bencher) {
+	b.iter(|| freivald::dumb_verify(&MATRIX_A, &MATRIX_A, &MATRIX_A_DOT_A));
+	// TODO check if optimizations are messing up benchmarks
 }
