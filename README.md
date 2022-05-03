@@ -1,7 +1,6 @@
 # Freivald-Rust
 
-An unsafe Rust implementation of Freivald's algorithm on matrix multiplication verification.
-It does not panic at overflows, and merely continues execution
+A Rust implementation of Freivald's algorithm on matrix multiplication verification.
 
 ### Get Started
 ```rust
