@@ -2,42 +2,11 @@
 //! It does not handle overflows, and merely continues execution
 
 #![allow(arithmetic_overflow)]
-use ndarray::{Array1, Array2};
-use rand::Rng;
-use std::iter::Iterator;
-struct Univar {
-    product: u128,
-    r: u128,
-}
-
-impl Univar {
-    fn new(r: u128) -> Self {
-        Univar { product: 1, r }
-    }
-}
-
-impl Iterator for Univar {
-    type Item = u128;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.product = self.product.wrapping_mul(self.r);
-        Some(self.product)
-    }
-}
-
-pub fn get_r() -> u128 {
-    let mut rng = rand::thread_rng();
-    rng.gen()
-}
-
-pub fn get_vec(r: u128, n: usize) -> Array1<u128> {
-    let var = Univar::new(r);
-    var.take(n).collect()
-}
+use ndarray::Array2;
 
 pub fn freivald_verify(a: &Array2<u128>, b: &Array2<u128>, c: &Array2<u128>) -> bool {
-    assert!(check_matrix_dimensions(a, b, c));
-    let v = get_vec(get_r(), c.ncols());
-    a.dot(&b.dot(&v)) == c.dot(&v)
+    // @dev: implement this
+    unimplemented!()
 }
 
 pub fn dumb_verify(a: &Array2<u128>, b: &Array2<u128>, c: &Array2<u128>) -> bool {
