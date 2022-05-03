@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate lazy_static;
 
-use ark_ff::biginteger::BigInteger64;
-use ark_ff::fields::{BitIteratorBE, Field};
-use ark_ff::BigInteger384;
 use freivald;
 use ndarray::{arr2, Array2};
 use ndarray_rand::rand_distr::Uniform;
@@ -15,10 +12,10 @@ lazy_static! {
 	static ref MATRIX_A_DOT_A: Array2<u128> = arr2(&[[7, 10], [15, 22]]);
 	static ref MATRIX_B: Array2<u128> = arr2(&[[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
 	static ref MATRIX_B_DOT_B: Array2<u128> = arr2(&[[30, 36, 42], [66, 81, 96], [102, 126, 150]]);
-	// // Very large matrices
-	static ref MATRIX_C: Array2<u128> = Array2::random((300, 300), Uniform::new(0, 10));
-	static ref MATRIX_D: Array2<u128> = Array2::<u128>::ones((300, 300));
-	static ref MATRIX_C_DOT_D: Array2<u128> = MATRIX_C.dot(&Array2::<u128>::ones((300, 300)));
+	// Large matrices
+	static ref MATRIX_C: Array2<u128> = Array2::random((200, 200), Uniform::new(0, 1));
+	static ref MATRIX_D: Array2<u128> = Array2::<u128>::ones((200, 200));
+	static ref MATRIX_C_DOT_D: Array2<u128> = MATRIX_C.dot(&Array2::<u128>::ones((200, 200)));
 }
 
 #[rstest]

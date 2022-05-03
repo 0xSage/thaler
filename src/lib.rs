@@ -1,6 +1,9 @@
-//! The Freivald crate implements Freivald's algorithm
+//! This Freivald library unsafely implements Freivald's algorithm
+//! It does not handle overflows, and merely continues execution
 
-use ndarray::{arr1, arr2, Array1, Array2};
+#![allow(arithmetic_overflow)]
+use ndarray::{Array1, Array2};
+use rand::Rng;
 use std::iter::Iterator;
 struct Univar {
     product: u128,
@@ -16,13 +19,14 @@ impl Univar {
 impl Iterator for Univar {
     type Item = u128;
     fn next(&mut self) -> Option<Self::Item> {
-        self.product *= self.r;
+        self.product = self.product.wrapping_mul(self.r);
         Some(self.product)
     }
 }
 
 pub fn get_r() -> u128 {
-    5
+    let mut rng = rand::thread_rng();
+    rng.gen()
 }
 
 pub fn get_vec(r: u128, n: usize) -> Array1<u128> {
