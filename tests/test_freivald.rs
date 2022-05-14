@@ -3,9 +3,9 @@ extern crate lazy_static;
 
 // scalar field
 use ark_bls12_381::Fr;
-use freivald;
 use ndarray::{arr2, Array2};
 use rstest::rstest;
+use thaler::freivald;
 
 lazy_static! {
 	static ref MATRIX_A: Array2<Fr> = arr2(&[[1.into(), 2.into()], [3.into(), 4.into()]]);

@@ -1,5 +1,7 @@
 // Import modules
-mod freivald;
+pub mod freivald;
+pub mod lagrange;
 
-// Re-export modules as a part of lib
-pub use crate::freivald::*;
+// Re-export shorter pads to module fns
+// pub use freivald::*;
+// pub use lagrange::*;
