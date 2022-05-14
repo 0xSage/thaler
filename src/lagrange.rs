@@ -2,7 +2,6 @@
 // Index is used to retrieves f evaluations
 // Padds to a vector of length, e.g. 000101
 pub fn n_to_vec(i: u64, n: usize) -> Vec<bool> {
-	let empty: Vec<bool> = vec![false; n];
 	let x: Vec<bool> = format!("{:0>width$}", format!("{:b}", i), width = n)
 		.chars()
 		.map(|x| x == '1')
@@ -15,7 +14,7 @@ pub fn n_to_vec(i: u64, n: usize) -> Vec<bool> {
 // w: in {0,1}^v
 // r: in {p}^v, e.g. F_5
 pub fn chi_w(w: &Vec<bool>, r: &Vec<i128>) -> i128 {
-	// assert_eq!(w.len(), r.len());
+	assert_eq!(w.len(), r.len());
 	// println!("calculating chi_w for w: ");
 	// println!("{:?}", w);
 	// println!("calculating chi_w for r: ");
@@ -36,7 +35,7 @@ pub fn chi_w(w: &Vec<bool>, r: &Vec<i128>) -> i128 {
 // Given p: the field size, e.g. 5
 // Compute f~(r) in O(n log n) time.
 // Output: evaluation in field F_p
-pub fn stream_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
+pub fn slow_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
 	assert_eq!(r.len() as f64, (fw.len() as f64).sqrt());
 	let sum: i128 = fw
 		.iter()
@@ -51,4 +50,7 @@ pub fn stream_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
 // Memoizing each iteration, e.g.
 // w_0 contributes to calculation of w_00, w_01
 // w_1 contributes to calcluation of w_10, 1_11
-pub fn dynamic_mle() {}
+pub fn dynamic_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
+	// TODO watch some memoization impl videos
+	0
+}
