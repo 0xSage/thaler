@@ -7,8 +7,8 @@ extern crate test;
 use test::Bencher;
 
 use ark_bls12_381::Fr;
-use freivald;
 use ndarray::Array2;
+use thaler::freivald;
 
 lazy_static! {
 	static ref MATRIX_A: Array2<Fr> = Array2::<Fr>::ones((50, 50));
