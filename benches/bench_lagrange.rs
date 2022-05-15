@@ -26,7 +26,7 @@ fn stream_mle_test(b: &mut Bencher) {
 	b.iter(|| lagrange::stream_mle(&F_2, &R_0, 5));
 }
 
-// #[bench]
-// fn stream_mle_test(b: &mut Bencher) {
-// 	b.iter(|| lagrange::stream_mle(&F_2, &R_0, 5));
-// }
+#[bench]
+fn dynamic_mle_test(b: &mut Bencher) {
+	b.iter(|| lagrange::dynamic_mle(&F_2, &R_0, 5));
+}

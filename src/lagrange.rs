@@ -3,9 +3,7 @@ pub fn chi_step(w: bool, x: i128) -> i128 {
 	x * i128::from(w) + (1 - x) * (1 - i128::from(w))
 }
 
-// Converts i into an index in {0,1}^v
-// Index is used to retrieves f evaluations
-// Pads to a vector of length, e.g. 000101
+// Converts i into an index in {0,1}^v, used to retrieves f evaluations
 pub fn n_to_vec(i: usize, n: usize) -> Vec<bool> {
 	let x: Vec<bool> = format!("{:0>width$}", format!("{:b}", i), width = n)
 		.chars()
