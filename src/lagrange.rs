@@ -70,45 +70,45 @@ pub fn recurse(fw: &Vec<i128>, r: &Vec<i128>, n: usize) -> i128 {
 // w_0 contributes to calculation of w_00, w_01
 // w_1 contributes to calcluation of w_10, 1_11, so on
 pub fn dynamic_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
-	// Step 1: build look up table with memoization
-	let mut cache: HashMap<String, i128> = HashMap::new();
-	memoize(&mut cache, r, r.len(), "".to_string());
+	let chi_lookup = memoize(r, r.len()); // vec of length n = 2^v
 
+	let result: i128 = fw
+		.iter()
+		.zip(chi_lookup.iter())
+		.map(|(left, right)| left * right)
+		.sum();
+	result % p
 	// Step 2: get inner product of f(w) and chi(r), i.e. just fw dot lookup table.
-	0
 }
 
-// v=0, recurse without memoize first...
+// v=0, recurse & implicitly "memoize" the redundant calculations
 // track w as a string..."00" "000" are different...
 pub fn memoize(
-	cache: &mut HashMap<String, i128>,
 	r: &Vec<i128>,
 	v: usize, // start 2
-	w: String,
 ) -> Vec<i128> {
 	match v {
 		1 => {
-			println!("Matched v=1 (memoize once)");
-			println!("string key is: {:?}", w);
+			println!("Matched v=1 (once)");
 			let basevec = vec![chi_step(false, r[v - 1]), chi_step(true, r[v - 1])];
 			println!("Base vec: {:?}", basevec);
 			basevec
 		}
 		_ => {
 			println!("Matched v={:?}", v);
-			println!("string key is: {:?}", w);
 			// or just get the prev vec and flatten it... vec![prev vec.flatten]
 			// each vector of previous vec* chim, prev_vec * chi.
-			let mut vec0: Vec<i128> = memoize(cache, r, v - 1, format!("{}{}", w, '0'))
+			// explode vector out into bigger vec...
+			let vec0: Vec<i128> = memoize(r, v - 1)
 				.iter()
-				.map(|val| val * chi_step(false, r[v - 1]))
+				.flat_map(|val| {
+					[
+						val * chi_step(false, r[v - 1]),
+						val * chi_step(true, r[v - 1]),
+					]
+				})
 				.collect();
-			let mut vec1: Vec<i128> = memoize(cache, r, v - 1, format!("{}{}", w, '0'))
-				.iter()
-				.map(|val| val * chi_step(true, r[v - 1]))
-				.collect();
-			vec0.append(&mut vec1);
-			println!("Vec now looks like: {:?}", vec0);
+			println!("Vec now looks like: {:?} (once)", vec0);
 			vec0
 		}
 	}
