@@ -2,6 +2,7 @@
 extern crate lazy_static;
 
 use rstest::rstest;
+use std::collections::HashMap;
 use thaler::lagrange;
 
 lazy_static! {
@@ -18,7 +19,7 @@ lazy_static! {
 #[case(&F_2, &R_1, 3, 5)]
 #[case(&F_2, &R_2, 4, 5)]
 #[case(&F_2, &R_3, 0, 5)]
-fn slow_lagrange(
+fn slow_lagrange_test(
 	#[case] fw: &Vec<i128>,
 	#[case] r: &Vec<i128>,
 	#[case] expected: i128,
@@ -32,11 +33,19 @@ fn slow_lagrange(
 #[case(&F_2, &R_1, 3, 5)]
 #[case(&F_2, &R_2, 4, 5)]
 #[case(&F_2, &R_3, 0, 5)]
-fn stream_lagrange(
+fn stream_lagrange_test(
 	#[case] fw: &Vec<i128>,
 	#[case] r: &Vec<i128>,
 	#[case] expected: i128,
 	#[case] p: i128,
 ) {
 	assert_eq!(lagrange::stream_mle(fw, r, p), expected);
+}
+
+#[test]
+fn memoize_test() {
+	let mut cache: HashMap<String, i128> = HashMap::new();
+	let r: Vec<i128> = Vec::from([1, 2, 3]);
+	let x = lagrange::memoize(&mut cache, &r, r.len(), "".to_string());
+	println!("Vec: {:?}", x);
 }

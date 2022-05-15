@@ -1,3 +1,11 @@
+// TODO use Fr
+use std::collections::HashMap;
+
+// One step in chi
+pub fn chi_step(w: bool, x: i128) -> i128 {
+	x * i128::from(w) + (1 - x) * (1 - i128::from(w))
+}
+
 // Converts i into an index in {0,1}^v
 // Index is used to retrieves f evaluations
 // Pads to a vector of length, e.g. 000101
@@ -17,17 +25,17 @@ pub fn chi_w(w: &Vec<bool>, r: &Vec<i128>) -> i128 {
 	let product: i128 = w
 		.iter()
 		.zip(r.iter())
-		.map(|(&w, &r)| i128::from(w) * r + (1 - i128::from(w)) * (1 - r))
+		.map(|(&w, &r)| chi_step(w, r))
 		.product();
 	product
 }
 
 // Given a vector `r` in (F_logn)
 // Given evaluation table of f(w), for all w in {0,1}^v
-// stored in vec, as 000, 001, 010, etc.
+// Stored in vec, as 000, 001, 010, etc.
 // Given n = 2^v
 // Given p: the field size, e.g. 5
-// Compute f~(r) in O(n log n) time.
+// Compute f~(r) in linear (slow) way
 // Output: evaluation in field F_p
 pub fn slow_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
 	assert_eq!(r.len() as f64, (fw.len() as f64).sqrt());
@@ -57,11 +65,51 @@ pub fn recurse(fw: &Vec<i128>, r: &Vec<i128>, n: usize) -> i128 {
 // --------------------
 
 // Procedure is v stages
-// Create chi table, storing w_000, w_001
+// Create chi table, storing w_000, w_001, w_010, so on.
 // Memoizing each iteration, e.g.
 // w_0 contributes to calculation of w_00, w_01
-// w_1 contributes to calcluation of w_10, 1_11
+// w_1 contributes to calcluation of w_10, 1_11, so on
 pub fn dynamic_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
-	// TODO watch some memoization impl videos
+	// Step 1: build look up table with memoization
+	let mut cache: HashMap<String, i128> = HashMap::new();
+	memoize(&mut cache, r, r.len(), "".to_string());
+
+	// Step 2: get inner product of f(w) and chi(r), i.e. just fw dot lookup table.
 	0
+}
+
+// v=0, recurse without memoize first...
+// track w as a string..."00" "000" are different...
+pub fn memoize(
+	cache: &mut HashMap<String, i128>,
+	r: &Vec<i128>,
+	v: usize, // start 2
+	w: String,
+) -> Vec<i128> {
+	match v {
+		1 => {
+			println!("Matched v=1 (memoize once)");
+			println!("string key is: {:?}", w);
+			let basevec = vec![chi_step(false, r[v - 1]), chi_step(true, r[v - 1])];
+			println!("Base vec: {:?}", basevec);
+			basevec
+		}
+		_ => {
+			println!("Matched v={:?}", v);
+			println!("string key is: {:?}", w);
+			// or just get the prev vec and flatten it... vec![prev vec.flatten]
+			// each vector of previous vec* chim, prev_vec * chi.
+			let mut vec0: Vec<i128> = memoize(cache, r, v - 1, format!("{}{}", w, '0'))
+				.iter()
+				.map(|val| val * chi_step(false, r[v - 1]))
+				.collect();
+			let mut vec1: Vec<i128> = memoize(cache, r, v - 1, format!("{}{}", w, '0'))
+				.iter()
+				.map(|val| val * chi_step(true, r[v - 1]))
+				.collect();
+			vec0.append(&mut vec1);
+			println!("Vec now looks like: {:?}", vec0);
+			vec0
+		}
+	}
 }
