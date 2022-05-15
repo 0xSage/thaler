@@ -1,12 +1,11 @@
 // Converts i into an index in {0,1}^v
 // Index is used to retrieves f evaluations
-// Padds to a vector of length, e.g. 000101
-pub fn n_to_vec(i: u64, n: usize) -> Vec<bool> {
+// Pads to a vector of length, e.g. 000101
+pub fn n_to_vec(i: usize, n: usize) -> Vec<bool> {
 	let x: Vec<bool> = format!("{:0>width$}", format!("{:b}", i), width = n)
 		.chars()
 		.map(|x| x == '1')
 		.collect();
-	// println!("{:?}", x);
 	x
 }
 
@@ -15,11 +14,6 @@ pub fn n_to_vec(i: u64, n: usize) -> Vec<bool> {
 // r: in {p}^v, e.g. F_5
 pub fn chi_w(w: &Vec<bool>, r: &Vec<i128>) -> i128 {
 	assert_eq!(w.len(), r.len());
-	// println!("calculating chi_w for w: ");
-	// println!("{:?}", w);
-	// println!("calculating chi_w for r: ");
-	// println!("{:?}", r);
-
 	let product: i128 = w
 		.iter()
 		.zip(r.iter())
@@ -40,9 +34,23 @@ pub fn slow_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
 	let sum: i128 = fw
 		.iter()
 		.enumerate()
-		.map(|(i, val)| val * chi_w(&n_to_vec(i as u64, r.len()), r))
+		.map(|(i, val)| val * chi_w(&n_to_vec(i, r.len()), r))
 		.sum();
 	sum % p
+}
+
+// Similar to slow_mle, but recursive:
+// f~(r) <- f~(r) + f(w) * chi_w(r)
+// Brings improvements in memory usage, storing just O(log n) elements
+pub fn stream_mle(fw: &Vec<i128>, r: &Vec<i128>, p: i128) -> i128 {
+	recurse(fw, r, 2usize.pow(r.len() as u32)) % p
+}
+
+pub fn recurse(fw: &Vec<i128>, r: &Vec<i128>, n: usize) -> i128 {
+	match n {
+		0 => 0,
+		_ => recurse(fw, r, n - 1) + fw[n - 1] * chi_w(&n_to_vec(n - 1, r.len()), r),
+	}
 }
 
 // Procedure is v stages
