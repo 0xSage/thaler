@@ -22,7 +22,7 @@ pub fn evaluate_term(
 	term: &SparseTerm,
 	point: &Vec<ScalarField>,
 ) -> (ScalarField, Option<SparseTerm>) {
-	println!("term: {:?}", term);
+	println!("        at term: {:?}", term);
 	let mut fixed_term: Option<SparseTerm> = None;
 	let coeff: ScalarField =
 		cfg_into_iter!(term).fold(1u32.into(), |product, (var, power)| match *var {
@@ -32,8 +32,11 @@ pub fn evaluate_term(
 			}
 			_ => point[*var].pow(&[*power as u64]) * product,
 		});
-	println!("evaluate term product: {:?}", coeff.into_repr());
-	println!("evaluate term fixed term: {:?}", fixed_term);
+	println!(
+		"             evaluate term product: {:?}",
+		coeff.into_repr()
+	);
+	println!("             simplified term: {:?}", fixed_term);
 	(coeff, fixed_term)
 }
 
@@ -54,25 +57,36 @@ impl Prover {
 		}
 	}
 
-	// kicks off computing each permutation of boolean hypercube...
-	// pub fn gen_gj(&self) -> UniPoly {
-	// 	(0..n).map(self.evaluate_poly([x, 0, 1, 0, 1]))
-	// }
-
 	// Prover fixes one more variable with r
 	// Returns: a univariate polynomial
-	pub fn fix_polynomial(&mut self, r: Option<ScalarField>) {
+	pub fn fix_polynomial(&mut self, r: Option<ScalarField>) -> UniPoly {
 		// 1. self modify g_j, into g(r... Xj, x, x), skip in 1st step
 
 		// 2. (0..n).map(self.evaluate_poly([(redacted), 0, 0, 0, etc]))
-		// calls evaluates_gj to get the evaluated univariate polynomial
 
 		// for testing
-		let gj = self.evaluate_gj(vec![1.into(), 1.into(), 1.into()]);
-		println!("fixed polynomial is now: {:?}", gj);
+		let v = self.g_j.num_vars();
+		// let fixed_over_hypercube: Vec<UniPoly> = (0..n)
+		// 	.map(|n| self.evaluate_gj(n_to_vec(n as usize, v)))
+		// 	.collect();
+		(0..(2u32.pow(v as u32 - 1))).fold(
+			UniPoly::from_coefficients_vec(vec![(0, 0u32.into())]),
+			|sum, n| {
+				let x = n_to_vec(n as usize, v);
+				println!(
+					"now evaluating: {:?}, {:?},{:?}",
+					x[0].into_repr(),
+					x[1].into_repr(),
+					x[2].into_repr()
+				);
+				sum + self.evaluate_gj(n_to_vec(n as usize, v))
+			},
+		)
+		// let gj = self.evaluate_gj(vec![1.into(), 1.into(), 1.into()]);
+		// println!("evaluations vec is now: {:?}", sum_fixed_over_hypercube);
 	}
 
-	// evaluates g_j over points
+	// evaluates g_j over a vector of points
 	// returns univariate::Polynomial with x_0 fixed
 	pub fn evaluate_gj(&self, points: Vec<ScalarField>) -> UniPoly {
 		// term coefficient
@@ -88,7 +102,21 @@ impl Prover {
 			})
 			.collect();
 		// Note: 0th degree is the constant...
-		println!("unipoly coefficients: {:?}", unipoly_coefficients);
+		println!(
+			"    unipoly term 1: degree {:?}: coefficient {:?}",
+			unipoly_coefficients[0].0,
+			unipoly_coefficients[0].1.into_repr()
+		);
+		println!(
+			"    unipoly term 2: degree {:?}: coefficient {:?}",
+			unipoly_coefficients[1].0,
+			unipoly_coefficients[1].1.into_repr()
+		);
+		println!(
+			"    unipoly term 3: degree {:?}: coefficient {:?}",
+			unipoly_coefficients[2].0,
+			unipoly_coefficients[2].1.into_repr()
+		);
 		UniPoly::from_coefficients_vec(unipoly_coefficients)
 	}
 

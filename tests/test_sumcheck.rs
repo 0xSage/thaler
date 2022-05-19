@@ -26,7 +26,7 @@ lazy_static! {
 // Test polynomial eval is correct when all variables are known
 // #[rstest]
 // #[case(&G_0)]
-// fn evaluate_polynomial_test(#[case] p: &MultiPoly) {
+// fn evaluate_polynomial_test(#[case] p: &sumcheck::MultiPoly) {
 // 	let result: BigInteger256 = p
 // 		.evaluate(&vec![2u32.into(), 3u32.into(), 4u32.into()])
 // 		.into_repr();
@@ -37,8 +37,13 @@ lazy_static! {
 #[case(&G_0)]
 fn sum_g_test(#[case] p: &sumcheck::MultiPoly) {
 	let mut p = sumcheck::Prover::new(p);
-	p.fix_polynomial(None);
-	// assert_eq!(p.sum_g(), 12.into());
+	// p.fix_polynomial(None);
+	let expected = sumcheck::UniPoly::from_coefficients_vec(vec![
+		(0, 1u32.into()),
+		(1, 2u32.into()),
+		(3, 8u32.into()),
+	]);
+	assert_eq!(p.fix_polynomial(None), expected);
 }
 
 // #[test]
