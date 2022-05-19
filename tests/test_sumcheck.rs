@@ -47,9 +47,12 @@ fn sum_g_test(#[case] p: &sumcheck::MultiPoly) {
 	let round_1_expected =
 		sumcheck::UniPoly::from_coefficients_vec(vec![(0, 34u32.into()), (1, 1u32.into())]);
 	assert_eq!(p.gen_uni_polynomial(Some(2u32.into())), round_1_expected);
+	let round_2_expected =
+		sumcheck::UniPoly::from_coefficients_vec(vec![(0, 16u32.into()), (1, 5u32.into())]);
+	assert_eq!(p.gen_uni_polynomial(Some(3u32.into())), round_2_expected);
 }
 
-// #[test]
-// fn test() {
-// 	sumcheck::evaluate_poly(&G_0, vec![1u32.into(), 1u32.into(), 1u32.into()]);
-// }
+#[test]
+fn sumcheck_verify_test() {
+	sumcheck::verify(&G_0, 12.into());
+}
