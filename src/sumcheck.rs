@@ -7,11 +7,34 @@ use ark_poly::polynomial::{MVPolynomial, Polynomial};
 // Polynomials representations:
 type MultiPoly = SparsePolynomial<ScalarField, SparseTerm>;
 
-// Super inefficient Prover: generates univariate polynomial g_j(X_j) where j is the variable/coordinate being fixed
+// Prover
+// Prover: generates univariate polynomial g_j(X_j) where j is the variable/coordinate being fixed
+// Super inefficient
 // Notice prover side only becomes efficient when we do multilinear extension of g...
 pub fn gen_gj() {
 	// TODO manual computation.. perhaps can be done recursively...
 }
+
+// Converts i into an index in {0,1}^v
+pub fn n_to_vec(i: usize, n: usize) -> Vec<ScalarField> {
+	let x: Vec<ScalarField> = format!("{:0>width$}", format!("{:b}", i), width = n)
+		.chars()
+		.map(|x| if x == '1' { 1.into() } else { 0.into() })
+		.collect();
+	x
+}
+
+// Sum all evaluations of a polynomial g over a boolean hypercube
+pub fn sum_g(g: &MultiPoly) -> ScalarField {
+	let v: u32 = g.num_vars() as u32;
+	let n = 2u32.pow(v);
+	let sum: ScalarField = (0..n)
+		.map(|n| g.evaluate(&n_to_vec(n as usize, g.num_vars())))
+		.sum();
+	sum
+}
+
+// Verifier
 
 // Verifier: Random r over large field F
 pub fn get_r() -> i128 {

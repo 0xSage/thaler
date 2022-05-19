@@ -25,12 +25,18 @@ lazy_static! {
 	);
 }
 
+// Test polynomial eval is correct when all variables are known
 #[rstest]
 #[case(&G_0)]
-fn verify_test(#[case] p: &MultiPoly) {
+fn evaluate_polynomial_test(#[case] p: &MultiPoly) {
 	let result: BigInteger256 = p
 		.evaluate(&vec![2u32.into(), 3u32.into(), 4u32.into()])
 		.into_repr();
-
 	assert_eq!(result, 36.into());
+}
+
+#[rstest]
+#[case(&G_0)]
+fn sum_g_test(#[case] p: &MultiPoly) {
+	assert_eq!(sumcheck::sum_g(p), 12.into());
 }
