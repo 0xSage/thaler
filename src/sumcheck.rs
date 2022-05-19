@@ -8,6 +8,35 @@ use ark_std::cfg_into_iter;
 pub type MultiPoly = SparsePolynomial<ScalarField, SparseTerm>;
 pub type UniPoly = UniSparsePolynomial<ScalarField>;
 
+// Converts i into an index in {0,1}^v
+pub fn n_to_vec(i: usize, n: usize) -> Vec<ScalarField> {
+	format!("{:0>width$}", format!("{:b}", i), width = n)
+		.chars()
+		.map(|x| if x == '1' { 1.into() } else { 0.into() })
+		.collect()
+}
+
+// Public helper fns for prover
+// Evaluates a term with a fixed var, returning (new coefficent, fixed term)
+pub fn evaluate_term(
+	term: &SparseTerm,
+	point: &Vec<ScalarField>,
+) -> (ScalarField, Option<SparseTerm>) {
+	println!("term: {:?}", term);
+	let mut fixed_term: Option<SparseTerm> = None;
+	let coeff: ScalarField =
+		cfg_into_iter!(term).fold(1u32.into(), |product, (var, power)| match *var {
+			0 => {
+				fixed_term = Some(SparseTerm::new(vec![(*var, *power)]));
+				product
+			}
+			_ => point[*var].pow(&[*power as u64]) * product,
+		});
+	println!("evaluate term product: {:?}", coeff.into_repr());
+	println!("evaluate term fixed term: {:?}", fixed_term);
+	(coeff, fixed_term)
+}
+
 // Simulates memory of a single prover instance
 #[derive(Debug, Clone)]
 pub struct Prover {
@@ -20,40 +49,48 @@ pub struct Prover {
 impl Prover {
 	pub fn new(g: &MultiPoly) -> Self {
 		Prover {
-			o_g: g.clone(),
-			g_j: g.clone(),
+			o_g: g.clone(), // unmodified, can be just a static ref
+			g_j: g.clone(), // modified each time
 		}
 	}
 
-	// pub fn gen_gj(&self) -> MultiPoly {
+	// kicks off computing each permutation of boolean hypercube...
+	// pub fn gen_gj(&self) -> UniPoly {
 	// 	(0..n).map(self.evaluate_poly([x, 0, 1, 0, 1]))
-	// 	// TODO manual computation.. perhaps can be done recursively...
 	// }
 
 	// Prover fixes one more variable with r
-	// Returns: a multivar polynomial
-	// pub fn fix_polynomial(&self, r: ScalarField) -> UniPoly {
-	// 	// modifies self.g_j
-	// 	// calls evaluates_gj to get the evaluated univariate polynomial
-	// }
+	// Returns: a univariate polynomial
+	pub fn fix_polynomial(&mut self, r: Option<ScalarField>) {
+		// 1. self modify g_j, into g(r... Xj, x, x), skip in 1st step
 
-	// // Fix 1 variable and evaluate the rest over the points
-	// // returns univariable
-	// pub fn evaluate_gj(&self, points: Vec<ScalarField>) -> UniPoly {
-	// 	let terms: Vec<(ScalarField, SparseTerm)> = cfg_into_iter!(g.terms())
-	// 		.map(|(coeff, term)| (*coeff, evaluate_term(&term, &points)))
-	// 		.collect();
-	// 	// TODO sum the non terms...
-	// 	// rebuild it back into a polynomial
-	// 	println!("evaluate poly: {:?}", terms);
-	// }
+		// 2. (0..n).map(self.evaluate_poly([(redacted), 0, 0, 0, etc]))
+		// calls evaluates_gj to get the evaluated univariate polynomial
 
-	// // returns a term that's evaluated...
-	// pub fn evaluate_term(term: &SparseTerm, points: &Vec<ScalarField>) -> SparseTerm {
-	// 	let variables_in_term = cfg_into_iter!(term).map(|(var, power)| (var, power));
-	// 	println!("evaluate_term: {:?}", variables_in_term);
-	// 	// TODO rebuild it back into a single term...
-	// }
+		// for testing
+		let gj = self.evaluate_gj(vec![1.into(), 1.into(), 1.into()]);
+		println!("fixed polynomial is now: {:?}", gj);
+	}
+
+	// evaluates g_j over points
+	// returns univariate::Polynomial with x_0 fixed
+	pub fn evaluate_gj(&self, points: Vec<ScalarField>) -> UniPoly {
+		// term coefficient
+		let unipoly_coefficients: Vec<(usize, ScalarField)> = cfg_into_iter!(self.g_j.terms())
+			.map(|(coeff, term)| {
+				let (coeff_eval, fixed_term) = evaluate_term(&term, &points);
+				// fixed_term is Option<SparseTerm>
+				match fixed_term {
+					// (degree, coefficient)
+					None => (0, *coeff * coeff_eval),
+					_ => (fixed_term.unwrap().degree(), *coeff * coeff_eval),
+				}
+			})
+			.collect();
+		// Note: 0th degree is the constant...
+		println!("unipoly coefficients: {:?}", unipoly_coefficients);
+		UniPoly::from_coefficients_vec(unipoly_coefficients)
+	}
 
 	// Sum all evaluations of polynomial `g` over boolean hypercube
 	pub fn sum_g(&self) -> ScalarField {
@@ -63,14 +100,6 @@ impl Prover {
 			.map(|n| self.o_g.evaluate(&n_to_vec(n as usize, v)))
 			.sum()
 	}
-}
-
-// Converts i into an index in {0,1}^v
-pub fn n_to_vec(i: usize, n: usize) -> Vec<ScalarField> {
-	format!("{:0>width$}", format!("{:b}", i), width = n)
-		.chars()
-		.map(|x| if x == '1' { 1.into() } else { 0.into() })
-		.collect()
 }
 
 // Verifier procedures

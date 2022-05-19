@@ -36,7 +36,8 @@ lazy_static! {
 #[rstest]
 #[case(&G_0)]
 fn sum_g_test(#[case] p: &sumcheck::MultiPoly) {
-	let p = sumcheck::Prover::new(p);
+	let mut p = sumcheck::Prover::new(p);
+	p.fix_polynomial(None);
 	// assert_eq!(p.sum_g(), 12.into());
 }
 
