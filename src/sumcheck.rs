@@ -57,18 +57,12 @@ impl Prover {
 		}
 	}
 
-	// Prover fixes one more variable with r
+	// Given polynomial g
+	// Fix x_0
+	// Evaluate over remaining x...
 	// Returns: a univariate polynomial
-	pub fn fix_polynomial(&mut self, r: Option<ScalarField>) -> UniPoly {
-		// 1. self modify g_j, into g(r... Xj, x, x), skip in 1st step
-
-		// 2. (0..n).map(self.evaluate_poly([(redacted), 0, 0, 0, etc]))
-
-		// for testing
+	pub fn gen_uni_polynomial(&mut self, r: Option<ScalarField>) -> UniPoly {
 		let v = self.g_j.num_vars();
-		// let fixed_over_hypercube: Vec<UniPoly> = (0..n)
-		// 	.map(|n| self.evaluate_gj(n_to_vec(n as usize, v)))
-		// 	.collect();
 		(0..(2u32.pow(v as u32 - 1))).fold(
 			UniPoly::from_coefficients_vec(vec![(0, 0u32.into())]),
 			|sum, n| {
@@ -82,8 +76,6 @@ impl Prover {
 				sum + self.evaluate_gj(n_to_vec(n as usize, v))
 			},
 		)
-		// let gj = self.evaluate_gj(vec![1.into(), 1.into(), 1.into()]);
-		// println!("evaluations vec is now: {:?}", sum_fixed_over_hypercube);
 	}
 
 	// evaluates g_j over a vector of points
@@ -93,7 +85,6 @@ impl Prover {
 		let unipoly_coefficients: Vec<(usize, ScalarField)> = cfg_into_iter!(self.g_j.terms())
 			.map(|(coeff, term)| {
 				let (coeff_eval, fixed_term) = evaluate_term(&term, &points);
-				// fixed_term is Option<SparseTerm>
 				match fixed_term {
 					// (degree, coefficient)
 					None => (0, *coeff * coeff_eval),

@@ -38,12 +38,14 @@ lazy_static! {
 fn sum_g_test(#[case] p: &sumcheck::MultiPoly) {
 	let mut p = sumcheck::Prover::new(p);
 	// p.fix_polynomial(None);
+	// let expected =
+	// 	sumcheck::UniPoly::from_coefficients_vec(vec![(0, 34u32.into()), (1, 1u32.into())]);
 	let expected = sumcheck::UniPoly::from_coefficients_vec(vec![
 		(0, 1u32.into()),
 		(1, 2u32.into()),
 		(3, 8u32.into()),
 	]);
-	assert_eq!(p.fix_polynomial(None), expected);
+	assert_eq!(p.gen_uni_polynomial(Some(2.into())), expected);
 }
 
 // #[test]
