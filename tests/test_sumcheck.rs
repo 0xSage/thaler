@@ -11,23 +11,23 @@ use ndarray::{arr2, Array2};
 use rstest::rstest;
 use thaler::sumcheck;
 
-lazy_static! {
-	static ref MATRIX_A: Array2<ScalarField> = arr2(&[[1.into(), 2.into()], [3.into(), 4.into()]]);
-}
+type MultiPoly = SparsePolynomial<ScalarField, SparseTerm>;
 
-// #[rstest]
-// #[case(&MATRIX_A, &MATRIX_A, &MATRIX_A_DOT_A)]
-#[test]
-fn verify_test() {
-	let p: SparsePolynomial<ScalarField, SparseTerm> = SparsePolynomial::from_coefficients_vec(
+lazy_static! {
+	// g = 2(x_1)^3 + (x_1)(x_3) + (x_2)(x_3)
+	static ref G_0: MultiPoly = SparsePolynomial::from_coefficients_vec(
 		3,
 		vec![
-			("2".parse().unwrap(), Term::new(vec![(0, 3)])),
-			("1".parse().unwrap(), Term::new(vec![(0, 1), (2, 1)])),
-			("1".parse().unwrap(), Term::new(vec![(1, 1), (2, 1)])),
+			(2u32.into(), SparseTerm::new(vec![(0, 3)])),
+			(1u32.into(), SparseTerm::new(vec![(0, 1), (2, 1)])),
+			(1u32.into(), SparseTerm::new(vec![(1, 1), (2, 1)])),
 		],
 	);
+}
 
+#[rstest]
+#[case(&G_0)]
+fn verify_test(#[case] p: &MultiPoly) {
 	let result: BigInteger256 = p
 		.evaluate(&vec![2u32.into(), 3u32.into(), 4u32.into()])
 		.into_repr();
