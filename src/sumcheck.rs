@@ -1,5 +1,5 @@
 use ark_bls12_381::Fr as ScalarField;
-use ark_ff::{BigInteger, Field, FpParameters, PrimeField};
+use ark_ff::Field;
 use ark_poly::polynomial::multivariate::{SparsePolynomial, SparseTerm, Term};
 use ark_poly::polynomial::univariate::SparsePolynomial as UniSparsePolynomial;
 use ark_poly::polynomial::{MVPolynomial, Polynomial};
@@ -27,15 +27,12 @@ pub struct Prover {
 impl Prover {
 	pub fn new(g: &MultiPoly) -> Self {
 		Prover {
-			g: g.clone(),  // unmodified, can be just a static ref
-			r_vec: vec![], // modified each time
+			g: g.clone(),
+			r_vec: vec![],
 		}
 	}
 
-	// Given polynomial g
-	// Fix x_0
-	// Evaluate over remaining x...
-	// Returns: a univariate polynomial
+	// Given polynomial g, fix Xj, evaluate over xj+1
 	pub fn gen_uni_polynomial(&mut self, r: Option<ScalarField>) -> UniPoly {
 		if r.is_some() {
 			self.r_vec.push(r.unwrap());
@@ -50,9 +47,7 @@ impl Prover {
 		)
 	}
 
-	// Public helper fns for prover
-	// Evaluates a term with a fixed var, returning (new coefficent, fixed term)
-	// point is [r1, r2, (rj, x, x, x,)]
+	// Evaluates a term with a fixed univar, returning (new coefficent, fixed term)
 	pub fn evaluate_term(
 		&self,
 		term: &SparseTerm,
@@ -71,10 +66,7 @@ impl Prover {
 		(coeff, fixed_term)
 	}
 
-	// evaluates g_j over a vector of points
-	// point is the later half of all points
-	// construct the univariate polynomial term by term
-	// returns univariate::Polynomial with x_0 fixed
+	// Evaluates g_j over a vector permutation of points, folding all evaluated terms together into one univariate polynomial
 	pub fn evaluate_gj(&self, points: Vec<ScalarField>) -> UniPoly {
 		cfg_into_iter!(self.g.terms()).fold(
 			UniPoly::from_coefficients_vec(vec![]),
@@ -93,7 +85,7 @@ impl Prover {
 	}
 
 	// Sum all evaluations of polynomial `g` over boolean hypercube
-	pub fn sum_g(&self) -> ScalarField {
+	pub fn slow_sum_g(&self) -> ScalarField {
 		let v = self.g.num_vars();
 		let n = 2u32.pow(v as u32);
 		(0..n)
@@ -103,14 +95,24 @@ impl Prover {
 }
 
 // Verifier procedures
-// Verifier: Random r over large field F
 pub fn get_r() -> Option<ScalarField> {
 	let mut rng = rand::thread_rng();
 	let r: ScalarField = rng.gen();
 	Some(r)
 }
 
-// SumCheck Protocol
+// A degree look up table for all variables in g
+pub fn max_degrees(g: &MultiPoly) -> Vec<usize> {
+	let mut lookup: Vec<usize> = vec![0; g.num_vars()];
+	cfg_into_iter!(g.terms()).for_each(|(_, term)| {
+		cfg_into_iter!(term).for_each(|(var, power)| {
+			if *power > lookup[*var] {
+				lookup[*var] = *power
+			}
+		});
+	});
+	lookup
+}
 
 // Assuming g and c_1 are from prover
 pub fn verify(g: &MultiPoly, c_1: ScalarField) -> bool {
@@ -119,33 +121,29 @@ pub fn verify(g: &MultiPoly, c_1: ScalarField) -> bool {
 	let mut gi = p.gen_uni_polynomial(None);
 	let mut expected_c = gi.evaluate(&0u32.into()) + gi.evaluate(&1u32.into());
 	assert_eq!(c_1, expected_c);
-	println!("expected c: {:?} ", expected_c.into_repr());
-	// todo, build helper function to let check degree
-	// assert!(g1.degree <=  );
-	// middle steps
-	for _ in 1..p.g.num_vars() {
-		// prev S
+	let lookup_degree = max_degrees(&g);
+	assert!(gi.degree() <= lookup_degree[0]);
+
+	// middle rounds
+	for j in 1..p.g.num_vars() {
 		let r = get_r();
 		expected_c = gi.evaluate(&r.unwrap());
-
-		println!("prev g evaluated on r: {:?}", expected_c.into_repr());
 		gi = p.gen_uni_polynomial(r);
 		let new_c = gi.evaluate(&0u32.into()) + gi.evaluate(&1u32.into());
-		println!("new c check: {:?}", new_c.into_repr());
 		assert_eq!(expected_c, new_c);
+		assert!(gi.degree() <= lookup_degree[j]);
 	}
-	// final check
+	// final round
 	let r = get_r();
 	expected_c = gi.evaluate(&r.unwrap());
-	// println!("prev g evaluated on r: {:?}", expected_c.into_repr());
-	// println!("new c check: {:?}", new_c.into_repr());
 	p.r_vec.push(r.unwrap());
 	let new_c = p.g.evaluate(&p.r_vec);
 	assert_eq!(expected_c, new_c);
 	true
 }
 
-// TODO later, slow verify is just computing g...
-pub fn slow_verify() -> bool {
-	true
+pub fn slow_verify(g: &MultiPoly, c_1: ScalarField) -> bool {
+	let p = Prover::new(g);
+	let manual_sum = p.slow_sum_g();
+	manual_sum == c_1
 }
