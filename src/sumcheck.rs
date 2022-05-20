@@ -20,8 +20,8 @@ pub fn n_to_vec(i: usize, n: usize) -> Vec<ScalarField> {
 // Simulates memory of a single prover instance
 #[derive(Debug, Clone)]
 pub struct Prover {
-	g: MultiPoly,
-	r_vec: Vec<ScalarField>,
+	pub g: MultiPoly,
+	pub r_vec: Vec<ScalarField>,
 }
 
 impl Prover {

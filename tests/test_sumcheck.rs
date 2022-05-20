@@ -35,5 +35,5 @@ lazy_static! {
 #[case(&G_0, &G_0_SUM)]
 #[case(&G_1, &G_1_SUM)]
 fn sumcheck_test(#[case] p: &sumcheck::MultiPoly, #[case] c: &ScalarField) {
-	assert!(sumcheck::verify(&G_0, *G_0_SUM));
+	assert!(sumcheck::verify(&p, *c));
 }
