@@ -40,9 +40,23 @@ impl Prover {
 		let v = self.g.num_vars() - self.r_vec.len();
 		(0..(2u32.pow(v as u32 - 1))).fold(
 			UniPoly::from_coefficients_vec(vec![(0, 0u32.into())]),
-			|sum, n| {
-				let x = n_to_vec(n as usize, v);
-				sum + self.evaluate_gj(n_to_vec(n as usize, v))
+			|sum, n| sum + self.evaluate_gj(n_to_vec(n as usize, v)),
+		)
+	}
+	// Evaluates gj over a vector permutation of points, folding all evaluated terms together into one univariate polynomial
+	pub fn evaluate_gj(&self, points: Vec<ScalarField>) -> UniPoly {
+		cfg_into_iter!(self.g.terms()).fold(
+			UniPoly::from_coefficients_vec(vec![]),
+			|sum, (coeff, term)| {
+				let (coeff_eval, fixed_term) = self.evaluate_term(&term, &points);
+				let curr = match fixed_term {
+					None => UniPoly::from_coefficients_vec(vec![(0, *coeff * coeff_eval)]),
+					_ => UniPoly::from_coefficients_vec(vec![(
+						fixed_term.unwrap().degree(),
+						*coeff * coeff_eval,
+					)]),
+				};
+				curr + sum
 			},
 		)
 	}
@@ -64,24 +78,6 @@ impl Prover {
 				_ => point[*var - self.r_vec.len()].pow(&[*power as u64]) * product,
 			});
 		(coeff, fixed_term)
-	}
-
-	// Evaluates g_j over a vector permutation of points, folding all evaluated terms together into one univariate polynomial
-	pub fn evaluate_gj(&self, points: Vec<ScalarField>) -> UniPoly {
-		cfg_into_iter!(self.g.terms()).fold(
-			UniPoly::from_coefficients_vec(vec![]),
-			|sum, (coeff, term)| {
-				let (coeff_eval, fixed_term) = self.evaluate_term(&term, &points);
-				let curr = match fixed_term {
-					None => UniPoly::from_coefficients_vec(vec![(0, *coeff * coeff_eval)]),
-					_ => UniPoly::from_coefficients_vec(vec![(
-						fixed_term.unwrap().degree(),
-						*coeff * coeff_eval,
-					)]),
-				};
-				curr + sum
-			},
-		)
 	}
 
 	// Sum all evaluations of polynomial `g` over boolean hypercube
@@ -114,7 +110,8 @@ pub fn max_degrees(g: &MultiPoly) -> Vec<usize> {
 	lookup
 }
 
-// Assuming g and c_1 are from prover
+// Verify prover's claim c_1
+// Presented pedantically:
 pub fn verify(g: &MultiPoly, c_1: ScalarField) -> bool {
 	// 1st round
 	let mut p = Prover::new(g);
